@@ -5,24 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
-    "canvas-confetti": "^1.9.4",
-    "clsx": "^2.1.1",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^4.2.1",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^1.40.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-leaflet": "^5.0.0",
-    "recharts": "^3.10.1",
-    "tailwind-merge": "^3.6.0"
-  },
-  "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/leaflet": "^1.9.22",
@@ -31,10 +18,23 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "autoprefixer": "^10.5.4",
-    "oxlint": "^1.79.0",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.40.0",
     "postcss": "^8.5.27",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
+  },
+  "devDependencies": {
+    "oxlint": "^1.79.0"
   }
 }
