@@ -642,17 +642,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-## Team
 
-| Role | Member |
-| :--- | :--- |
-| **Team Lead** | Om Jadhav |
-| **AI / ML Engineer** | Om Jadhav |
-| **Backend Engineer** | Om Jadhav |
-| **Frontend & GIS Engineer** | Om Jadhav |
-| **Data & Domain Research** | Om Jadhav |
-
----
 
 <p align="center">
   <sub>Sagar Drishti — Maritime Environmental Intelligence Platform</sub>
