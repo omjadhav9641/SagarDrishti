@@ -9,4 +9,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8005"))
     host = os.getenv("HOST", "0.0.0.0")
     print(f"Starting SAGAR DRISHTI FastAPI Server on http://{host}:{port} ...")
-    uvicorn.run("app.main:app", host=host, port=port, log_level="info")
+    uvicorn.run(app, host=host, port=port)
