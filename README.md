@@ -531,6 +531,44 @@ Frontend application will open at `http://localhost:3000`.
 
 ---
 
+## 🚀 Deployment Guide
+
+### Architecture
+```
+GitHub Repository (main)
+        │
+        ├──► Vercel (Frontend Static SPA) ─────► https://sagar-drishti.vercel.app
+        │           │
+        │      API Proxy (/api/*)
+        │           │
+        └──► Render (FastAPI Python Backend) ──► https://sagar-drishti-backend.onrender.com
+```
+
+### 1. Frontend Deployment (Vercel)
+The repository is pre-configured with `vercel.json`:
+1. Connect repository to [Vercel](https://vercel.com).
+2. Set **Root Directory** to `./` (or `frontend`).
+3. Framework Preset: **Vite**.
+4. Set Environment Variable:
+   - `VITE_API_BASE_URL` = `https://sagar-drishti-backend.onrender.com`
+5. Deploy.
+
+### 2. Backend Deployment (Render)
+The repository includes `render.yaml` and `backend/requirements.txt`:
+1. Connect repository to [Render](https://render.com).
+2. Create a new **Web Service**.
+3. Set **Root Directory** to `backend`.
+4. Environment: `Python`.
+5. Build Command: `pip install -r requirements.txt`
+6. Start Command: `python run_server.py`
+7. Set Environment Variables:
+   - `PORT` = `10000`
+   - `HOST` = `0.0.0.0`
+   - `FRONTEND_URL` = `https://sagar-drishti.vercel.app`
+8. Deploy.
+
+---
+
 ## Interactive Map
 
 - **Tile Provider**: OpenStreetMap light basemap tiles (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`).

@@ -39,13 +39,18 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     setPdfBlob(null);
   };
 
+  const getApiUrl = (endpoint: string) => {
+    const base = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '') : '';
+    return `${base}${endpoint}`;
+  };
+
   const handleGeneratePDF = async () => {
     setPdfStatus('generating');
     setErrorMessage(null);
     cleanupPdfUrl();
 
     try {
-      const response = await fetch('/api/report/pdf');
+      const response = await fetch(getApiUrl('/api/report/pdf'));
 
       if (!response.ok) {
         const text = await response.text().catch(() => '');
@@ -92,7 +97,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   const handleDownloadCSV = async () => {
     try {
-      const response = await fetch('/api/report/csv');
+      const response = await fetch(getApiUrl('/api/report/csv'));
       if (!response.ok) throw new Error('CSV endpoint error');
       const rawBlob = await response.blob();
       const csvBlob = new Blob([rawBlob], { type: 'text/csv' });
@@ -107,7 +112,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       setTimeout(() => window.URL.revokeObjectURL(url), 2000);
     } catch (err) {
       console.error('CSV Export Exception:', err);
-      window.open('/api/report/csv', '_blank');
+      window.open(getApiUrl('/api/report/csv'), '_blank');
     }
   };
 

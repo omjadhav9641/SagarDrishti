@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: sagar-drishti-backend
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python backend/run_server.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: FRONTEND_URL
+        value: https://sagar-drishti.vercel.app
