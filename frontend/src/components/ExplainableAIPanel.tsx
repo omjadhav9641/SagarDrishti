@@ -28,10 +28,10 @@ export const ExplainableAIPanel: React.FC<ExplainableAIPanelProps> = ({
   const scoreBars = [
     { label: 'Spatial Proximity', val: sb.spatial, color: 'bg-blue-600' },
     { label: 'Temporal Correlation', val: sb.temporal, color: 'bg-teal-600' },
-    { label: 'Trajectory Compatibility', val: sb.trajectory, color: 'bg-indigo-600' },
+    { label: 'Trajectory Compatibility', val: sb.trajectory, color: 'bg-teal-700' },
     { label: 'Behavior Anomaly Signal', val: sb.behavior_anomaly, color: 'bg-amber-600' },
-    { label: 'AIS Gap Indicator', val: sb.ais_gap, color: 'bg-rose-600' },
-    { label: 'Drift Consistency', val: sb.drift_consistency, color: 'bg-emerald-600' },
+    { label: 'AIS Gap Indicator', val: sb.ais_gap, color: 'bg-amber-500' },
+    { label: 'Drift Consistency', val: sb.drift_consistency, color: 'bg-blue-700' },
   ];
 
   return (
@@ -79,9 +79,9 @@ export const ExplainableAIPanel: React.FC<ExplainableAIPanelProps> = ({
             {vessel.correlation_score} <span className="text-xs text-slate-400">/100</span>
           </div>
           <span
-            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+            className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
               vessel.investigation_priority === 'HIGH'
-                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                ? 'bg-amber-100 text-amber-900 border border-amber-300'
                 : vessel.investigation_priority === 'MEDIUM'
                 ? 'bg-amber-50 text-amber-800 border border-amber-200'
                 : 'bg-slate-100 text-slate-700 border border-slate-300'

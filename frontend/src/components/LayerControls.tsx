@@ -40,7 +40,7 @@ export const LayerControls: React.FC<LayerControlsProps> = ({ layers, setLayers 
           onClick={() => toggle('showSpill')}
           className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all ${
             layers.showSpill
-              ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold shadow-xs'
+              ? 'bg-amber-50 border-amber-300 text-amber-900 font-bold shadow-xs'
               : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -52,7 +52,7 @@ export const LayerControls: React.FC<LayerControlsProps> = ({ layers, setLayers 
           onClick={() => toggle('showMask')}
           className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all ${
             layers.showMask
-              ? 'bg-teal-50 border-teal-300 text-teal-800 font-bold shadow-xs'
+              ? 'bg-blue-50 border-blue-300 text-blue-800 font-bold shadow-xs'
               : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -100,7 +100,7 @@ export const LayerControls: React.FC<LayerControlsProps> = ({ layers, setLayers 
           onClick={() => toggle('showVessels')}
           className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all ${
             layers.showVessels
-              ? 'bg-purple-50 border-purple-300 text-purple-800 font-bold shadow-xs'
+              ? 'bg-slate-900 border-slate-700 text-teal-300 font-bold shadow-xs'
               : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -112,7 +112,7 @@ export const LayerControls: React.FC<LayerControlsProps> = ({ layers, setLayers 
           onClick={() => toggle('showVectors')}
           className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all ${
             layers.showVectors
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold shadow-xs'
+              ? 'bg-teal-50 border-teal-300 text-teal-800 font-bold shadow-xs'
               : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
           }`}
         >

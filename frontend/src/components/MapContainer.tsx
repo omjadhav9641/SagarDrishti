@@ -60,8 +60,8 @@ const createVesselIcon = (priority: string, isSelected: boolean) => {
   let color = '#3b82f6';
   let glow = 'rgba(59, 130, 246, 0.5)';
   if (priority === 'HIGH') {
-    color = '#ef4444';
-    glow = 'rgba(239, 68, 68, 0.8)';
+    color = '#f59e0b';
+    glow = 'rgba(245, 158, 11, 0.8)';
   } else if (priority === 'MEDIUM') {
     color = '#f59e0b';
     glow = 'rgba(245, 158, 11, 0.6)';
@@ -345,11 +345,11 @@ export const MapContainer: React.FC<MapViewProps> = ({
                     <div className="flex items-center justify-between border-b border-slate-200 pb-1">
                       <span className="font-bold text-slate-900 text-sm">{vessel.vessel_name}</span>
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${
                           vessel.investigation_priority === 'HIGH'
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
                             : vessel.investigation_priority === 'MEDIUM'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
                             : 'bg-slate-100 text-slate-800 border border-slate-300'
                         }`}
                       >
@@ -360,7 +360,7 @@ export const MapContainer: React.FC<MapViewProps> = ({
                     <div className="text-slate-700">
                       <div>MMSI: <strong className="text-teal-700">{vessel.mmsi}</strong></div>
                       <div>Type: {vessel.vessel_type} ({vessel.flag || 'Panama'})</div>
-                      <div>Correlation Score: <strong className="text-rose-600 text-sm">{vessel.correlation_score}/100</strong></div>
+                      <div>Correlation Score: <strong className="text-teal-700 text-sm">{vessel.correlation_score}/100</strong></div>
                       <div>Distance to Origin: <strong className="text-amber-700">{vessel.min_distance_to_origin_km} km</strong></div>
                       <div>Closest Time: {currentPos.timestamp.includes('T') ? currentPos.timestamp.split('T')[1].slice(0, 5) : currentPos.timestamp} UTC</div>
                       <div>Speed / Course: {currentPos.sog} kts @ {currentPos.cog}°</div>

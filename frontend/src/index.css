@@ -63,6 +63,16 @@
   border-radius: 0.75rem;
 }
 
+/* Scope Leaflet controls to z-20 so sticky navbar (z-50) always stays cleanly on top */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 20 !important;
+}
+
+.leaflet-pane {
+  z-index: 10 !important;
+}
+
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #0f172a !important;

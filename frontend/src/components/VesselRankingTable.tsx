@@ -65,8 +65,8 @@ export const VesselRankingTable: React.FC<VesselRankingTableProps> = ({
 
               if (vessel.investigation_priority === 'HIGH') {
                 priorityBadge = (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                    HIGH
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 font-mono">
+                    HIGH PRIORITY
                   </span>
                 );
               } else if (vessel.investigation_priority === 'MEDIUM') {

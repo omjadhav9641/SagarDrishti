@@ -73,7 +73,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           
           {/* Card 1: Spill Area */}
-          <div className="glass-panel p-3.5 border-l-4 border-l-rose-500">
+          <div className="glass-panel p-3.5 border-l-4 border-l-amber-500">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
               ESTIMATED SLICK AREA
             </div>
@@ -86,15 +86,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           {/* Card 2: Spill Detection Confidence */}
-          <div className="glass-panel p-3.5 border-l-4 border-l-emerald-500">
+          <div className="glass-panel p-3.5 border-l-4 border-l-teal-600">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
               SPILL DETECTION CONF.
             </div>
-            <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
+            <div className="text-2xl font-black text-teal-700 font-mono mt-1">
               {incident.detection.confidence}%
             </div>
             <div className="text-xs text-slate-500 mt-0.5">
-              Source: <span className="text-emerald-800 font-medium font-mono">UNet SAR Model</span>
+              Source: <span className="text-teal-800 font-medium font-mono">UNet SAR Model</span>
             </div>
           </div>
 
