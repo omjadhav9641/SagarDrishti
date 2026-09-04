@@ -33,34 +33,45 @@ export const AISFilterPanel: React.FC<AISFilterPanelProps> = ({ summary, darkVes
         </span>
       </div>
 
-      {/* Dark Vessel Analysis Card */}
+      {/* Potential Non-AIS Contact Analysis Card */}
       {darkVessels && (
-        <div className="bg-slate-900 text-slate-100 p-3.5 rounded-lg border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div className="bg-slate-900 text-slate-100 p-4 rounded-xl border border-slate-800 space-y-3 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
             <div className="flex items-center space-x-2">
-              <EyeOff className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold font-mono tracking-wide text-amber-300">
-                DARK-VESSEL & NON-AIS TRANSMISSION ANALYSIS
+              <EyeOff className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-xs font-bold font-mono tracking-wide text-amber-300 uppercase">
+                POTENTIAL NON-AIS CONTACT ANALYSIS
               </span>
             </div>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
-              {darkVessels.unmatched_sar_echoes} Unmatched SAR Echoes
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800 font-mono self-start sm:self-auto">
+              {darkVessels.unmatched_sar_echoes} Potential Non-AIS Contacts
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono pt-1">
-            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50">
-              <div className="text-[10px] text-slate-400 font-semibold uppercase">SAR Ship Echoes</div>
-              <div className="text-sm font-bold text-slate-200">{darkVessels.sar_echoes_detected || 7} Detected</div>
+          {/* Contact Breakdown */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
+            <div className="bg-slate-800/80 p-2.5 rounded-lg border border-blue-900/60">
+              <div className="text-[10px] text-blue-300 font-semibold uppercase">SAR Ship-Like Echoes</div>
+              <div className="text-base font-black text-blue-200 mt-0.5">{darkVessels.sar_echoes_detected || 7} Detected</div>
             </div>
-            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50">
-              <div className="text-[10px] text-slate-400 font-semibold uppercase">AIS Matched Echoes</div>
-              <div className="text-sm font-bold text-teal-300">{darkVessels.ais_matched_echoes || 5} Transmitting</div>
+            <div className="bg-slate-800/80 p-2.5 rounded-lg border border-teal-900/60">
+              <div className="text-[10px] text-teal-300 font-semibold uppercase">AIS Matched Contacts</div>
+              <div className="text-base font-black text-teal-300 mt-0.5">{darkVessels.ais_matched_echoes || 5} Transmitting</div>
             </div>
-            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50">
-              <div className="text-[10px] text-slate-400 font-semibold uppercase">Dark Vessel Candidates</div>
-              <div className="text-sm font-bold text-rose-400">{darkVessels.unmatched_sar_echoes || 2} Potential Non-AIS</div>
+            <div className="bg-slate-800/80 p-2.5 rounded-lg border border-amber-900/60">
+              <div className="text-[10px] text-amber-300 font-semibold uppercase">Potential Non-AIS Contacts</div>
+              <div className="text-base font-black text-amber-400 mt-0.5">{darkVessels.unmatched_sar_echoes || 2} Unmatched</div>
             </div>
+          </div>
+
+          {/* Help & Explanation Note */}
+          <div className="bg-slate-800/40 p-2.5 rounded-lg border border-slate-700/60 text-[11px] text-slate-300 leading-relaxed font-mono">
+            <p>
+              <strong className="text-amber-300 font-semibold">Investigative Context:</strong> A potential non-AIS contact is a ship-like SAR echo that could not be matched to an AIS position within configured spatial/temporal tolerances. This is an investigation indicator, not proof of AIS shutdown or wrongdoing.
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              Possible non-suspicious factors: AIS coverage gaps, timing mismatch, positional uncertainty, incomplete telemetry feeds, or SAR backscatter noise.
+            </p>
           </div>
         </div>
       )}
