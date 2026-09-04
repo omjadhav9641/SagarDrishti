@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Satellite, Info, Eye, Layers, HelpCircle } from 'lucide-react';
-import { DetectionResult } from '../types';
+import { Satellite, Info, Eye, Layers, ShieldCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { DetectionResult, LookAlikeFilterResult } from '../types';
 
 interface DetectionPanelProps {
   detection: DetectionResult;
+  lookAlike?: LookAlikeFilterResult;
   sarImageB64: string;
   onOpacityChange: (opacity: number) => void;
 }
 
 export const DetectionPanel: React.FC<DetectionPanelProps> = ({
   detection,
+  lookAlike,
   sarImageB64,
   onOpacityChange
 }) => {
@@ -24,28 +26,58 @@ export const DetectionPanel: React.FC<DetectionPanelProps> = ({
   return (
     <div className="glass-panel p-5 space-y-4">
       
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+      {/* Header with Product Module Name */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
         <div className="flex items-center space-x-2">
-          <Satellite className="w-5 h-5 text-teal-700" />
-          <h2 className="font-bold text-slate-900 text-sm tracking-wide uppercase font-mono">
-            SATELLITE OIL-SPILL DETECTION
-          </h2>
+          <Satellite className="w-5 h-5 text-teal-700 shrink-0" />
+          <div>
+            <span className="text-[10px] font-bold tracking-wider text-teal-800 font-mono block">MODULE 1</span>
+            <h2 className="font-bold text-slate-900 text-sm tracking-wide uppercase font-mono">
+              DRISHTI-SCAN — SATELLITE DETECTION
+            </h2>
+          </div>
         </div>
 
         {/* Scientific Classification Badge */}
-        <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-          Potential Oil Slick ({detection.confidence}%)
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            Potential Oil Slick ({detection.confidence}%)
+          </span>
+        </div>
       </div>
 
-      {/* Scientific Limitation Tooltip Notice */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-start space-x-2 font-mono">
-        <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-        <p>
-          <strong>Scientific Notice:</strong> SAR dark slicks can also be caused by natural look-alikes such as low wind areas, ocean internal waves, or biological films. Results should be interpreted alongside environmental drift context.
-        </p>
-      </div>
+      {/* Look-Alike Filter Card */}
+      {lookAlike && (
+        <div className="bg-slate-900 text-slate-100 p-3.5 rounded-lg border border-slate-800 space-y-2.5">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-bold font-mono tracking-wide text-emerald-400">
+                LOOK-ALIKE FILTER ANALYSIS
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+              {lookAlike.verdict} ({lookAlike.confidence})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+            {(lookAlike.checks || []).map((chk, cIdx) => (
+              <div key={cIdx} className="flex items-start space-x-2 bg-slate-800/60 p-2 rounded border border-slate-700/50">
+                {chk.passed ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <span className="font-bold text-slate-200">{chk.name}:</span>
+                  <span className="text-slate-400 ml-1">{chk.detail}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Side-by-Side Dual Viewer */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

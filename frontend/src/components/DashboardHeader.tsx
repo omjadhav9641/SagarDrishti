@@ -17,7 +17,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onOpenReport,
   onRunDemo
 }) => {
-  const isDemo = incident.incident_id === 'SD-001';
+  const isDemo = incident.incident_id.startsWith('SD-SAR') || incident.incident_id === 'SD-001';
 
   return (
     <div className="bg-white border-b border-slate-200 py-5 px-4 sm:px-6 lg:px-8 mb-6 shadow-sm">
@@ -85,55 +85,55 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </div>
           </div>
 
-          {/* Card 2: Detection Confidence */}
+          {/* Card 2: Spill Detection Confidence */}
           <div className="glass-panel p-3.5 border-l-4 border-l-emerald-500">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
-              DETECTION CONFIDENCE
+              SPILL DETECTION CONF.
             </div>
             <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
               {incident.detection.confidence}%
             </div>
             <div className="text-xs text-slate-500 mt-0.5">
-              Status: <span className="text-emerald-800 font-medium">Potential Oil Slick</span>
+              Source: <span className="text-emerald-800 font-medium font-mono">UNet SAR Model</span>
             </div>
           </div>
 
-          {/* Card 3: Release Window */}
+          {/* Card 3: Origin Hindcast Confidence */}
           <div className="glass-panel p-3.5 border-l-4 border-l-amber-500">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
-              RELEASE WINDOW
+              ORIGIN HINDCAST CONF.
             </div>
-            <div className="text-sm font-bold text-slate-800 font-mono mt-1">
-              {(incident.detection.estimated_release_window.start.includes('T') ? incident.detection.estimated_release_window.start.split('T')[1] : incident.detection.estimated_release_window.start).slice(0,5)}–{(incident.detection.estimated_release_window.end.includes('T') ? incident.detection.estimated_release_window.end.split('T')[1] : incident.detection.estimated_release_window.end).slice(0,5)} UTC
+            <div className="text-2xl font-black text-amber-700 font-mono mt-1">
+              {incident.drift.monte_carlo_cone?.origin_confidence_pct || 78.5}%
             </div>
-            <div className="text-xs text-slate-500 mt-0.5">
-              Est. Age: <span className="text-slate-700 font-medium">{incident.detection.estimated_release_window.estimated_age_hours}</span>
+            <div className="text-xs text-slate-500 mt-0.5 truncate">
+              Radius: <span className="text-amber-800 font-medium">±{incident.drift.backcast.probable_origin.uncertainty_radius_km} km</span>
             </div>
           </div>
 
-          {/* Card 4: Vessels Analyzed */}
-          <div className="glass-panel p-3.5 border-l-4 border-l-blue-500">
+          {/* Card 4: Top Lead Association Score */}
+          <div className="glass-panel p-3.5 border-l-4 border-l-teal-600">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
-              VESSELS ANALYZED
+              LEAD VESSEL ASSOCIATION
             </div>
-            <div className="text-2xl font-black text-slate-900 font-mono mt-1">
-              {incident.ais_summary.total_in_region}
+            <div className="text-2xl font-black text-teal-700 font-mono mt-1">
+              {incident.ranked_vessels[0]?.correlation_score || 91.0} <span className="text-xs font-semibold text-slate-500">/100</span>
             </div>
-            <div className="text-xs text-slate-500 mt-0.5">
-              In Spatial Radius: <span className="text-slate-700 font-medium">{incident.ais_summary.spatially_relevant}</span>
+            <div className="text-xs text-slate-500 mt-0.5 truncate">
+              Lead: <span className="text-teal-800 font-bold">{incident.ranked_vessels[0]?.vessel_name || 'MT OCEAN STAR'}</span>
             </div>
           </div>
 
           {/* Card 5: Prioritized Leads */}
-          <div className="glass-panel p-3.5 border-l-4 border-l-teal-600">
+          <div className="glass-panel p-3.5 border-l-4 border-l-blue-600">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
-              INVESTIGATION LEADS
+              AIS CORRELATION LEADS
             </div>
-            <div className="text-2xl font-black text-teal-700 font-mono mt-1">
+            <div className="text-2xl font-black text-slate-900 font-mono mt-1">
               {incident.ais_summary.strongly_correlated}
             </div>
             <div className="text-xs text-slate-500 mt-0.5">
-              High Priority: <span className="text-rose-600 font-bold">1 Vessel</span>
+              Region Feed: <span className="text-slate-700 font-medium">{incident.ais_summary.total_in_region} vessels</span>
             </div>
           </div>
 

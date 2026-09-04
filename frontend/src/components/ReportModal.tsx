@@ -69,7 +69,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
     // 1. Try Primary API Endpoint
     try {
-      const primaryUrl = getApiUrl('/api/report/pdf');
+      const primaryUrl = getApiUrl(`/api/report/pdf?scene_id=${incident?.incident_id || 'SD-SAR-001'}`);
       const response = await fetch(primaryUrl);
       if (response.ok) {
         const b = await response.blob();
@@ -82,7 +82,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     // 2. Try Secondary Relative API Endpoint if primary failed
     if (!fetchedBlob && import.meta.env.VITE_API_BASE_URL) {
       try {
-        const response = await fetch('/api/report/pdf');
+        const response = await fetch(`/api/report/pdf?scene_id=${incident?.incident_id || 'SD-SAR-001'}`);
         if (response.ok) {
           const b = await response.blob();
           if (b && b.size > 0) fetchedBlob = b;
@@ -401,7 +401,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   const handleDownloadCSV = async () => {
     try {
-      const response = await fetch(getApiUrl('/api/report/csv'));
+      const response = await fetch(getApiUrl(`/api/report/csv?scene_id=${incident?.incident_id || 'SD-SAR-001'}`));
       if (response.ok) {
         const rawBlob = await response.blob();
         if (rawBlob && rawBlob.size > 0) {

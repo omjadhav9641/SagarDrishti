@@ -149,16 +149,92 @@ export interface ScoringWeights {
   drift: number;
 }
 
+export interface DataSourceItem {
+  name: string;
+  status: string;
+  code: string;
+  provider: string;
+  message: string;
+}
+
+export interface DataSourcesStatus {
+  sar_source: DataSourceItem;
+  ais_source: DataSourceItem;
+  environmental_source: DataSourceItem;
+  pipeline_status: string;
+}
+
+export interface SARScene {
+  scene_id: string;
+  satellite: string;
+  sensor_mode: string;
+  polarization: string;
+  acquisition_timestamp: string;
+  region_name: string;
+  center_lat: number;
+  center_lon: number;
+  status: string;
+  provenance: string;
+}
+
+export interface PipelineLogStep {
+  step: number;
+  stage: string;
+  message: string;
+  status: string;
+  timestamp_utc: string;
+}
+
+export interface PipelineRunResponse {
+  scene_id: string;
+  status: string;
+  execution_time_sec: number;
+  execution_logs: PipelineLogStep[];
+  incident: IncidentData;
+}
+
+export interface MonteCarloCone {
+  num_realizations: number;
+  seed: number;
+  particles: { lat: number; lon: number }[][];
+  origin_center: { lat: number; lon: number };
+  uncertainty_radius_km: number;
+  origin_confidence_pct: number;
+  cone_boundary: number[][];
+}
+
+export interface LookAlikeCheck {
+  name: string;
+  passed: boolean;
+  detail: string;
+}
+
+export interface LookAlikeFilterResult {
+  verdict: string;
+  confidence: string;
+  checks: LookAlikeCheck[];
+}
+
+export interface DarkVesselStats {
+  sar_echoes_detected: number;
+  ais_matched_echoes: number;
+  unmatched_sar_echoes: number;
+  dark_vessel_candidates: any[];
+}
+
 export interface IncidentData {
   incident_id: string;
   title: string;
   location_name: string;
   detection_timestamp: string;
+  spill_area_km2?: number;
   sar_image_b64: string;
   detection: DetectionResult;
+  look_alike?: LookAlikeFilterResult;
   environmental: EnvironmentalData;
   drift: {
     backcast: DriftData;
+    monte_carlo_cone?: MonteCarloCone;
     forecast: ForecastPoint[];
   };
   ais_summary: {
@@ -167,6 +243,9 @@ export interface IncidentData {
     present_in_release_window: number;
     strongly_correlated: number;
   };
+  dark_vessels?: DarkVesselStats;
   ranked_vessels: VesselCandidate[];
   timeline: TimelineEvent[];
+  data_sources?: DataSourcesStatus;
 }
+

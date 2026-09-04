@@ -30,7 +30,7 @@ export const ExplainableAIPanel: React.FC<ExplainableAIPanelProps> = ({
     { label: 'Temporal Correlation', val: sb.temporal, color: 'bg-teal-600' },
     { label: 'Trajectory Compatibility', val: sb.trajectory, color: 'bg-indigo-600' },
     { label: 'Behavior Anomaly Signal', val: sb.behavior_anomaly, color: 'bg-amber-600' },
-    { label: 'AIS Transmission Continuity', val: sb.ais_gap, color: 'bg-rose-600' },
+    { label: 'AIS Gap Indicator', val: sb.ais_gap, color: 'bg-rose-600' },
     { label: 'Drift Consistency', val: sb.drift_consistency, color: 'bg-emerald-600' },
   ];
 
@@ -43,8 +43,11 @@ export const ExplainableAIPanel: React.FC<ExplainableAIPanelProps> = ({
           <div className="flex items-center space-x-2">
             <Sparkles className="w-5 h-5 text-teal-700" />
             <h2 className="font-bold text-slate-900 text-sm tracking-wide uppercase font-mono">
-              EXPLAINABLE EVIDENCE SUMMARY
+              EXPLAINABLE FEATURE CONTRIBUTION
             </h2>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 uppercase font-mono">
+              Demo feature-contribution model
+            </span>
           </div>
           <p className="text-xs text-slate-500 font-mono mt-0.5">
             Multi-factor audit checklist explaining vessel prioritization score.

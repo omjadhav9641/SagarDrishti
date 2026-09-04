@@ -1,38 +1,66 @@
 import React from 'react';
-import { Compass, Navigation, ShieldAlert, Info } from 'lucide-react';
-import { DriftData } from '../types';
+import { Compass, Navigation, ShieldAlert, Info, Sparkles } from 'lucide-react';
+import { DriftData, MonteCarloCone } from '../types';
 
 interface DriftPanelProps {
   drift: DriftData;
+  monteCarloCone?: MonteCarloCone;
 }
 
-export const DriftPanel: React.FC<DriftPanelProps> = ({ drift }) => {
+export const DriftPanel: React.FC<DriftPanelProps> = ({ drift, monteCarloCone }) => {
   const origin = drift.probable_origin;
 
   return (
     <div className="glass-panel p-5 space-y-4">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
         <div className="flex items-center space-x-2">
-          <Compass className="w-5 h-5 text-amber-600" />
-          <h2 className="font-bold text-slate-900 text-sm tracking-wide uppercase font-mono">
-            OCEAN DRIFT & PROBABLE ORIGIN RECONSTRUCTION
-          </h2>
+          <Compass className="w-5 h-5 text-amber-600 shrink-0" />
+          <div>
+            <span className="text-[10px] font-bold tracking-wider text-amber-700 font-mono block">MODULE 2</span>
+            <h2 className="font-bold text-slate-900 text-sm tracking-wide uppercase font-mono">
+              PRAVAHA-HINDCAST — DRIFT & ORIGIN RECONSTRUCTION
+            </h2>
+          </div>
         </div>
 
         <span className="px-2.5 py-1 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-          Hindcast: -{drift.hindcast_hours}h
+          Hindcast: -{drift.hindcast_hours}h Advection
         </span>
       </div>
 
-      {/* Model Note */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-start space-x-2 font-mono">
-        <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-        <p>
-          Drift reconstruction is a simplified advection model using available current and wind vectors. Uncertainty increases with hindcast duration and environmental data uncertainty.
-        </p>
-      </div>
+      {/* Monte Carlo Ensemble Probability Cone Card */}
+      {monteCarloCone && (
+        <div className="bg-slate-900 text-slate-100 p-3.5 rounded-lg border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-4 h-4 text-teal-400" />
+              <span className="text-xs font-bold font-mono tracking-wide text-teal-300">
+                MONTE CARLO ENSEMBLE PROBABILITY CONE
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-teal-950 text-teal-300 border border-teal-800">
+              {monteCarloCone.num_realizations || 15} Particles Realized
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono pt-1">
+            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50">
+              <div className="text-[10px] text-slate-400 font-semibold uppercase">Origin Confidence</div>
+              <div className="text-sm font-bold text-emerald-400">{monteCarloCone.origin_confidence_pct || 78.5}%</div>
+            </div>
+            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50">
+              <div className="text-[10px] text-slate-400 font-semibold uppercase">Ensemble Radius</div>
+              <div className="text-sm font-bold text-amber-300">±{monteCarloCone.uncertainty_radius_km || 2.0} km</div>
+            </div>
+            <div className="bg-slate-800/60 p-2 rounded border border-slate-700/50 col-span-2 sm:col-span-1">
+              <div className="text-[10px] text-slate-400 font-semibold uppercase">Hydrodynamic Model</div>
+              <div className="text-sm font-bold text-teal-300">2D Advection + 3.5% Drag</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Origin Highlight Box */}
       <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">

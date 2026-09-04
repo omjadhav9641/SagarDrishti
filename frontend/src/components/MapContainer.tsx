@@ -26,7 +26,7 @@ const MapRecenter: React.FC<{ center: [number, number] }> = ({ center }) => {
 // Ocean Boundary Geometry Clipping Helper
 function getApproxCoastlineLon(lat: number): number {
   if (lat >= 18.0 && lat <= 19.5) {
-    return 72.88 - (lat - 18.5) * 0.12;
+    return 72.86 - (lat - 18.0) * 0.04;
   } else if (lat >= 15.0 && lat < 18.0) {
     return 73.4 - (lat - 15.0) * 0.17;
   } else if (lat > 19.5 && lat <= 23.0) {
@@ -34,7 +34,7 @@ function getApproxCoastlineLon(lat: number): number {
   } else if (lat >= 8.0 && lat < 15.0) {
     return 76.5 - (lat - 8.0) * 0.44;
   }
-  return 72.90;
+  return 72.84;
 }
 
 function isPointInOcean(lat: number, lon: number): boolean {
@@ -174,7 +174,45 @@ export const MapContainer: React.FC<MapViewProps> = ({
           </Polygon>
         )}
 
-        {/* 2. Probable Origin Zone Layer */}
+        {/* 2. Monte Carlo Probability Cone Layer */}
+        {layers.showOrigin && incident?.drift?.monte_carlo_cone?.cone_boundary && (
+          <Polygon
+            positions={(incident.drift.monte_carlo_cone.cone_boundary || []).map(pt => [pt[0], pt[1]] as [number, number])}
+            pathOptions={{
+              color: '#0d9488',
+              fillColor: '#14b8a6',
+              fillOpacity: 0.18,
+              weight: 1.5,
+              dashArray: '4, 4'
+            }}
+          >
+            <Tooltip>
+              <span className="font-sans text-xs text-teal-900 font-semibold">
+                Monte Carlo Ensemble Probability Cone ({incident.drift.monte_carlo_cone.num_realizations || 15} realizations, {incident.drift.monte_carlo_cone.origin_confidence_pct || 78.5}% confidence)
+              </span>
+            </Tooltip>
+          </Polygon>
+        )}
+
+        {/* Monte Carlo Particle Trajectories */}
+        {layers.showOrigin && (incident?.drift?.monte_carlo_cone?.particles || []).map((particleTrack, pIdx) => {
+          const pCoords: [number, number][] = particleTrack.map(pt => [pt.lat, pt.lon] as [number, number]);
+          const clippedPCoords = clipPathToOcean(pCoords);
+          return (
+            <Polyline
+              key={`mc-part-${pIdx}`}
+              positions={clippedPCoords}
+              pathOptions={{
+                color: '#0d9488',
+                weight: 1,
+                opacity: 0.35,
+                dashArray: '2, 4'
+              }}
+            />
+          );
+        })}
+
+        {/* 2b. Probable Origin Zone Center Layer */}
         {layers.showOrigin && originPolygonCoords.length > 0 && (
           <Polygon
             positions={originPolygonCoords}

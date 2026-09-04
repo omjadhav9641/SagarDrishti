@@ -47,8 +47,8 @@ def move_point(lat: float, lon: float, distance_km: float, bearing_deg: float) -
 def get_approx_coastline_lon(lat: float) -> float:
     """Returns approximate coastline longitude for Indian Arabian Sea coast."""
     if 18.0 <= lat <= 19.5:
-        # Mumbai / Maharashtra coastline interpolation
-        return 72.88 - (lat - 18.5) * 0.12
+        # Mumbai / Raigad coastline interpolation (runs ~72.86 E at 18.0 N to ~72.80 E at 19.5 N)
+        return 72.86 - (lat - 18.0) * 0.04
     elif 15.0 <= lat < 18.0:
         # Goa / South Maharashtra
         return 73.4 - (lat - 15.0) * 0.17
@@ -58,7 +58,7 @@ def get_approx_coastline_lon(lat: float) -> float:
     elif 8.0 <= lat < 15.0:
         # Karnataka / Kerala
         return 76.5 - (lat - 8.0) * 0.44
-    return 72.90
+    return 72.84
 
 def is_point_in_ocean(lat: float, lon: float) -> bool:
     """Validates if a (lat, lon) coordinate is in the ocean (offshore India west coast)."""

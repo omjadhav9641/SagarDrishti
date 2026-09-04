@@ -1,5 +1,6 @@
 import io
 import os
+import re
 from typing import Dict, Any, List
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -8,6 +9,14 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, KeepTogether, HRFlowable
 )
 from reportlab.pdfgen import canvas
+
+def clean_html_tags(text: str) -> str:
+    """Strips unescaped HTML tags (e.g. <b>, <span>) ensuring clean text rendering in PDF."""
+    if not text:
+        return ""
+    clean = re.sub(r'<[^>]+>', '', str(text))
+    return clean.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+
 
 class NumberedCanvas(canvas.Canvas):
     """Custom canvas that computes total pages and draws page footers."""
@@ -154,23 +163,22 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     elements = []
 
     # Extract Canonical Data Fields
-    inc_id = incident.get("incident_id", "SD-001")
+    inc_id = incident.get("incident_id", "SD-SAR-001")
     inc_title = incident.get("title", "Arabian Sea Offshore Spill — Mumbai High Sector")
     location = incident.get("location_name", "Arabian Sea (18.523° N, 72.812° E)")
     timestamp = incident.get("detection_timestamp", "2025-09-08T10:30:00Z")
     
     detection = incident.get("detection", {})
-    spill_area = detection.get("area_km2", 41.86)
-    confidence = detection.get("confidence", 88.8)
+    spill_area = incident.get("spill_area_km2", detection.get("area_km2", 14.7))
+    confidence = detection.get("confidence", 94.2)
     release_window = detection.get("estimated_release_window", {})
     start_win = release_window.get("start", "08:00 UTC")
     end_win = release_window.get("end", "10:00 UTC")
 
-    report_type_label = "DEMONSTRATION REPORT" if inc_id.startswith("SD-") else "ANALYSIS GENERATED"
-    status_label = "DEMONSTRATION ANALYSIS" if inc_id.startswith("SD-") else "ANALYSIS GENERATED"
+    report_type_label = "DEMONSTRATION REPORT"
+    status_label = "DEMONSTRATION ANALYSIS"
 
     # Document Header Banner with Official Sagar Drishti Logo Artwork
-    # Width: 180pt, Height: 72pt (aspect ratio 2.5:1)
     logo_image = Image(logo_path, width=180, height=72)
 
     header_right_cell = [
@@ -201,18 +209,22 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     elements.append(Paragraph("1. EXECUTIVE INCIDENT SUMMARY", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     
+    ranked_vessels = incident.get("ranked_vessels", [])
+    top_lead_name = ranked_vessels[0].get("vessel_name", "N/A") if ranked_vessels else "N/A"
+    top_lead_score = ranked_vessels[0].get("correlation_score", 0.0) if ranked_vessels else 0.0
+
     exec_summary_text = (
-        f"This dossier summarizes satellite SAR detection, hydrodynamic advection drift modeling, and AIS vessel correlation "
-        f"for Incident {inc_id} ({inc_title}). Satellite imagery acquired at {timestamp} isolated a potential "
-        f"oil slick measuring {spill_area} km². Drift hindcasting reconstructed a Probable Origin Zone centered at "
-        f"18.558° N, 72.846° E (±2.0 km uncertainty) between {start_win} and {end_win}. AIS telemetry correlation "
-        f"identified candidate vessel MT OCEAN STAR (MMSI: 419001892) as the primary lead with a correlation score of 91.0 / 100."
+        f"This dossier summarizes satellite SAR detection (Drishti-Scan), hydrodynamic advection drift modeling (Pravaha-Hindcast), "
+        f"and AIS vessel correlation (Rakshak-Trace) for Incident {inc_id} ({inc_title}). Satellite imagery acquired at {timestamp} isolated a potential "
+        f"oil slick measuring {spill_area} km². Pravaha-Hindcast drift modeling reconstructed a Probable Origin Zone centered at "
+        f"probable origin coordinates (±2.0 km uncertainty) between {start_win} and {end_win}. Rakshak-Trace AIS correlation "
+        f"identified candidate vessel {top_lead_name} as the primary lead with a correlation score of {top_lead_score} / 100."
     )
     elements.append(Paragraph(exec_summary_text, body_style))
     elements.append(Spacer(1, 6))
 
-    # 2. INCIDENT OVERVIEW
-    elements.append(Paragraph("2. INCIDENT OVERVIEW", h1_style))
+    # 2. DRISHTI-SCAN — SATELLITE OIL SPILL DETECTION
+    elements.append(Paragraph("2. DRISHTI-SCAN — SATELLITE OIL SPILL DETECTION", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     
     meta_table_data = [
@@ -247,84 +259,52 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     elements.append(meta_table)
     elements.append(Spacer(1, 6))
 
-    # 3. SATELLITE OIL-SLICK ANALYSIS
-    elements.append(Paragraph("3. SATELLITE OIL-SLICK ANALYSIS", h1_style))
+    # 3. LOOK-ALIKE FILTER ANALYSIS
+    elements.append(Paragraph("3. LOOK-ALIKE FILTER ANALYSIS", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     
-    sat_text = (
-        "Synthetic Aperture Radar (SAR) imagery captured by Sentinel-1 C-Band in VV polarization was processed using adaptive "
-        "thresholding and UNet semantic segmentation. Dark backscatter attenuation anomalies were confirmed to represent a surface slick."
+    look_alike_info = incident.get("look_alike", {})
+    look_alike_text = (
+        f"Look-Alike Filter Classification: {look_alike_info.get('verdict', 'Potential Genuine Spill')} "
+        f"({look_alike_info.get('confidence', 'High')}). Multi-parameter feature analysis evaluated radar backscatter dampening, "
+        f"wind speed threshold consistency, shape geometric compactness, and environmental chlorophyll signatures to rule out biogenic false positives."
     )
-    elements.append(Paragraph(sat_text, body_style))
-    elements.append(Spacer(1, 4))
-
-    # 4. SPILL CHARACTERISTICS
-    elements.append(Paragraph("4. SPILL CHARACTERISTICS", h1_style))
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
-    
-    spill_char_data = [
-        [Paragraph("Slick Area:", bold_body_style), Paragraph(f"{spill_area} km²", body_style), Paragraph("Perimeter:", bold_body_style), Paragraph(f"{detection.get('perimeter_km', 29.36)} km", body_style)],
-        [Paragraph("Length × Width:", bold_body_style), Paragraph(f"{detection.get('length_km', 10.15)} × {detection.get('width_km', 7.9)} km", body_style), Paragraph("Compactness Ratio:", bold_body_style), Paragraph(f"{detection.get('compactness', 0.548)} (Elongated Trail)", body_style)],
-        [Paragraph("Classification:", bold_body_style), Paragraph("Potential Marine Oil Slick", body_style), Paragraph("Look-alike Risk:", bold_body_style), Paragraph("Low (Surface Wind > 12 km/h)", body_style)]
-    ]
-    spill_table = Table(spill_char_data, colWidths=[110, 160, 110, 160])
-    spill_table.setStyle(TableStyle([
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#f1f5f9')),
-        ('PADDING', (0, 0), (-1, -1), 4),
-    ]))
-    elements.append(spill_table)
+    elements.append(Paragraph(look_alike_text, body_style))
     elements.append(Spacer(1, 6))
 
-    # 5. ENVIRONMENTAL CONDITIONS
-    elements.append(Paragraph("5. ENVIRONMENTAL CONDITIONS", h1_style))
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
-    
-    env = incident.get("environmental", {})
-    env_data = [
-        [Paragraph("Surface Wind Velocity:", bold_body_style), Paragraph(f"{env.get('wind_speed_kmh', 18)} km/h ({env.get('wind_direction_label', 'NE')} {env.get('wind_direction_deg', 45)}°)", body_style), Paragraph("Ocean Current Velocity:", bold_body_style), Paragraph(f"{env.get('current_speed_ms', 0.42)} m/s ({env.get('current_direction_label', 'SW')} {env.get('current_direction_deg', 225)}°)", body_style)],
-        [Paragraph("Net Advection Speed:", bold_body_style), Paragraph("2.14 km/h (SW Drift)", body_style), Paragraph("Sea State:", bold_body_style), Paragraph(f"{env.get('sea_state', 'Slight / Code 3')}", body_style)]
-    ]
-    env_table = Table(env_data, colWidths=[110, 160, 110, 160])
-    env_table.setStyle(TableStyle([
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#f1f5f9')),
-        ('PADDING', (0, 0), (-1, -1), 4),
-    ]))
-    elements.append(env_table)
-    elements.append(Spacer(1, 6))
-
-    # 6. PROBABLE ORIGIN & DRIFT RECONSTRUCTION
-    elements.append(Paragraph("6. PROBABLE ORIGIN & DRIFT RECONSTRUCTION", h1_style))
+    # 4. PRAVAHA-HINDCAST & MONTE CARLO ORIGIN CONE
+    elements.append(Paragraph("4. PRAVAHA-HINDCAST & MONTE CARLO ORIGIN CONE", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     
     drift_info = incident.get("drift", {}).get("backcast", {})
     origin_info = drift_info.get("probable_origin", {})
 
     drift_text = (
-        f"A 2.5-hour backward advection model combining 100% current vector and 3.5% wind drag reconstructed the release path. "
-        f"The Probable Origin Zone is centered at {origin_info.get('lat', 18.558)}° N, {origin_info.get('lon', 72.846)}° E "
-        f"with a ±{origin_info.get('uncertainty_radius_km', 2.0)} km uncertainty radius during release window {start_win}–{end_win}."
+        f"Pravaha-Hindcast 2.5-hour hydrodynamic advection drift model combined 100% current vector and 3.5% surface wind drag. "
+        f"A 15-particle Monte Carlo Ensemble Probability Cone reconstructed the release path, estimating a central Probable Origin Zone at "
+        f"{origin_info.get('lat', 18.558)}° N, {origin_info.get('lon', 72.846)}° E (±{origin_info.get('uncertainty_radius_km', 2.0)} km uncertainty) "
+        f"during release window {start_win}–{end_win}."
     )
     elements.append(Paragraph(drift_text, body_style))
     elements.append(Spacer(1, 6))
 
-    # 7. AIS VESSEL ANALYSIS
-    elements.append(Paragraph("7. AIS VESSEL ANALYSIS (FUNNEL FILTERING)", h1_style))
+    # 5. RAKSHAK-TRACE — AIS VESSEL ATTRIBUTION & DARK-VESSEL ANALYSIS
+    elements.append(Paragraph("5. RAKSHAK-TRACE — AIS VESSEL ATTRIBUTION & DARK-VESSEL ANALYSIS", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
 
     ais_stats = incident.get("ais_summary", {})
+    dark_stats = incident.get("dark_vessels", {})
     funnel_text = (
-        f"Raw sector AIS feed tracked {ais_stats.get('total_in_region', 126)} vessels. "
-        f"Spatial buffer filtering narrowed candidates to {ais_stats.get('spatially_relevant', 32)} vessels, "
-        f"temporal matching identified {ais_stats.get('present_in_release_window', 11)} vessels present in the release window, "
-        f"and multi-factor correlation prioritized {ais_stats.get('strongly_correlated', 5)} leads."
+        f"Rakshak-Trace Funnel: Ingested {ais_stats.get('total_in_region', 126)} regional AIS tracks. "
+        f"Spatial filtering narrowed leads to {ais_stats.get('spatially_relevant', 32)} vessels; release window matching identified "
+        f"{ais_stats.get('present_in_release_window', 11)} candidate vessels. Dark-Vessel Analysis detected {dark_stats.get('sar_echoes_detected', 7)} SAR ship echoes, "
+        f"matching {dark_stats.get('ais_matched_echoes', 5)} to active AIS transmissions and flagging {dark_stats.get('unmatched_sar_echoes', 2)} unmatched radar contacts for priority review."
     )
     elements.append(Paragraph(funnel_text, body_style))
     elements.append(Spacer(1, 6))
 
-    # 8. POTENTIALLY ASSOCIATED VESSEL RANKING
-    elements.append(Paragraph("8. POTENTIALLY ASSOCIATED VESSEL RANKING", h1_style))
+    # 6. EXPLAINABLE FEATURE CONTRIBUTION & VESSEL RANKING
+    elements.append(Paragraph("6. EXPLAINABLE FEATURE CONTRIBUTION & VESSEL RANKING", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
 
     vessel_headers = [
@@ -339,7 +319,6 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     ]
     vessel_rows = [vessel_headers]
 
-    ranked_vessels = incident.get("ranked_vessels", [])
     for idx, v in enumerate(ranked_vessels, 1):
         priority = v.get("investigation_priority", "LOW")
         score = v.get("correlation_score", 50.0)
@@ -377,14 +356,14 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     elements.append(v_table)
     elements.append(Spacer(1, 6))
 
-    # 9. PRIMARY INVESTIGATION LEAD
+    # 7. PRIMARY INVESTIGATION LEAD EVIDENCE
     if ranked_vessels:
         lead = ranked_vessels[0]
-        elements.append(Paragraph("9. PRIMARY INVESTIGATION LEAD EVIDENCE", h1_style))
+        elements.append(Paragraph("7. PRIMARY INVESTIGATION LEAD EVIDENCE", h1_style))
         elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
 
-        lead_summary = f"Primary Lead: {lead.get('vessel_name')} ({lead.get('vessel_type')}) — Score: {lead.get('correlation_score')} / 100 ({lead.get('investigation_priority')} PRIORITY)\n"
-        lead_summary += f"{lead.get('explainable_summary', '')}"
+        lead_summary = f"Primary Lead: {clean_html_tags(lead.get('vessel_name'))} ({clean_html_tags(lead.get('vessel_type'))}) — Score: {lead.get('correlation_score')} / 100 ({lead.get('investigation_priority')} PRIORITY)\n"
+        lead_summary += f"{clean_html_tags(lead.get('explainable_summary', ''))}"
         elements.append(Paragraph(lead_summary, body_style))
         elements.append(Spacer(1, 4))
 
@@ -401,7 +380,7 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
             )
             evidence_items.append([
                 Paragraph(mark, mark_style),
-                Paragraph(item.get("text", ""), body_style),
+                Paragraph(clean_html_tags(item.get("text", "")), body_style),
                 Paragraph(f"Score: +{item.get('score', 0)} pts", body_style)
             ])
         
@@ -416,8 +395,8 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
 
     elements.append(Spacer(1, 6))
 
-    # 10. CHRONOLOGICAL INCIDENT TIMELINE
-    elements.append(Paragraph("10. CHRONOLOGICAL INCIDENT TIMELINE", h1_style))
+    # 8. CHRONOLOGICAL INCIDENT TIMELINE
+    elements.append(Paragraph("8. CHRONOLOGICAL INCIDENT TIMELINE", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
 
     timeline_data = [[
@@ -429,9 +408,9 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     for evt in incident.get("timeline", []):
         v_mmsi = f"MMSI {evt.get('vessel_mmsi')}" if evt.get('vessel_mmsi') else "N/A"
         timeline_data.append([
-            Paragraph(evt.get("time", ""), body_style),
-            Paragraph(evt.get('title', ''), bold_body_style),
-            Paragraph(evt.get("description", ""), body_style),
+            Paragraph(clean_html_tags(evt.get("time", "")), body_style),
+            Paragraph(clean_html_tags(evt.get('title', '')), bold_body_style),
+            Paragraph(clean_html_tags(evt.get("description", "")), body_style),
             Paragraph(v_mmsi, body_style)
         ])
     
@@ -444,34 +423,25 @@ def generate_pdf_report(incident: Dict[str, Any]) -> bytes:
     elements.append(t_table)
     elements.append(Spacer(1, 6))
 
-    # 11. METHODOLOGY
-    elements.append(Paragraph("11. METHODOLOGY", h1_style))
+    # 9. METHODOLOGY & DATA SOURCES
+    elements.append(Paragraph("9. METHODOLOGY & DATA SOURCES", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     method_text = (
-        "Sagar Drishti employs a 8-stage framework combining satellite SAR UNet segmentation, 2D advection hydrodynamic "
-        "drift physics (current + 3.5% wind drag), AIS spatial-temporal filtering, and multi-factor correlation scoring."
+        "Sagar Drishti framework combines: (1) Drishti-Scan satellite SAR UNet dark slick detection & look-alike filtering, "
+        "(2) Pravaha-Hindcast 2D advection drift physics with 15-particle Monte Carlo probability cone, "
+        "(3) Rakshak-Trace AIS candidate spatio-temporal funnel filtering and Dark-Vessel analysis, and "
+        "(4) Explainable multi-factor scoring for vessel attribution."
     )
     elements.append(Paragraph(method_text, body_style))
     elements.append(Spacer(1, 6))
 
-    # 12. LIMITATIONS
-    elements.append(Paragraph("12. LIMITATIONS", h1_style))
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
-    lim_text = (
-        "1. Satellite SAR look-alikes may occur during low wind conditions (<3 m/s).\n"
-        "2. Vessels operating with disabled AIS transponders cannot be tracked via AIS telemetry.\n"
-        "3. Surface current vectors assume spatial uniformity across the 50 km sector."
-    )
-    elements.append(Paragraph(lim_text, body_style))
-    elements.append(Spacer(1, 8))
-
-    # 13. INVESTIGATION DISCLAIMER
-    elements.append(Paragraph("13. INVESTIGATION DISCLAIMER", h1_style))
+    # 10. LIMITATIONS & INVESTIGATION DISCLAIMER
+    elements.append(Paragraph("10. LIMITATIONS & INVESTIGATION DISCLAIMER", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE, spaceBefore=1, spaceAfter=4))
     disclaimer_text = (
-        "NON-ATTRIBUTION LEGAL NOTICE: Correlation scores and vessel rankings generated by Sagar Drishti represent "
+        "DEMONSTRATION ANALYSIS NOTICE: Correlation scores and vessel rankings generated by Sagar Drishti represent "
         "investigative prioritization indicators based on multi-factor telemetry analysis. They do not establish legal responsibility "
-        "or constitute conclusive legal proof of liability. Physical sampling and Coast Guard verification are required for official enforcement."
+        "or constitute legal proof of liability. Coast Guard verification and physical sampling are required for official enforcement."
     )
     elements.append(Paragraph(disclaimer_text, disclaimer_style))
 
@@ -488,6 +458,6 @@ def generate_csv_report(incident: Dict[str, Any]) -> str:
     ]
     for v in incident.get("ranked_vessels", []):
         anom = v.get("anomalies", {})
-        line = f'{v.get("mmsi")},"{v.get("vessel_name")}","{v.get("vessel_type")}","{v.get("flag","N/A")}",{v.get("correlation_score")},{v.get("investigation_priority")},{v.get("min_distance_to_origin_km")},"{v.get("closest_timestamp")}",{anom.get("has_speed_anomaly", False)},{anom.get("max_ais_gap_minutes", 0)},"{v.get("explainable_summary","")}"'
+        line = f'{v.get("mmsi")},"{v.get("vessel_name")}","{v.get("vessel_type")}","{v.get("flag","N/A")}",{v.get("correlation_score")},{v.get("investigation_priority")},{v.get("min_distance_to_origin_km")},"{v.get("closest_timestamp")}",{anom.get("has_speed_anomaly", False)},{anom.get("max_ais_gap_minutes", 0)},"{v.get("explainable_summary","")}'
         lines.append(line)
     return "\n".join(lines)

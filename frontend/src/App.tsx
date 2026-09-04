@@ -5,6 +5,8 @@ import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { DashboardHeader } from './components/DashboardHeader';
 import { DemoSequenceBanner } from './components/DemoSequenceBanner';
+import { AutomatedMonitoringPanel } from './components/AutomatedMonitoringPanel';
+import { InvestigationAlertBanner } from './components/InvestigationAlertBanner';
 import { MapContainer } from './components/MapContainer';
 import { LayerControls, MapLayerState } from './components/LayerControls';
 import { DetectionPanel } from './components/DetectionPanel';
@@ -20,14 +22,37 @@ import { ScoringConfigModal } from './components/ScoringConfigModal';
 import { ReportModal } from './components/ReportModal';
 import { MethodologyModal } from './components/MethodologyModal';
 
-import { fetchHealthStatus, fetchDemoIncident, rankVesselsWithWeights } from './services/api';
-import { IncidentData, VesselCandidate, ScoringWeights, DetectionResult } from './types';
+import {
+  fetchHealthStatus,
+  fetchDemoIncident,
+  fetchDataSourcesStatus,
+  fetchSARScenes,
+  runAutomatedPipeline,
+  rankVesselsWithWeights
+} from './services/api';
+
+import {
+  IncidentData,
+  VesselCandidate,
+  ScoringWeights,
+  DataSourcesStatus,
+  SARScene,
+  PipelineLogStep
+} from './types';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'landing'>('dashboard');
+  const [viewMode, setViewMode] = useState<'automated' | 'manual'>('automated');
   const [incident, setIncident] = useState<IncidentData | null>(null);
   const [selectedVessel, setSelectedVessel] = useState<VesselCandidate | null>(null);
   const [systemStatus, setSystemStatus] = useState<string>('ONLINE');
+
+  // Automated Pipeline State
+  const [dataSourcesStatus, setDataSourcesStatus] = useState<DataSourcesStatus | null>(null);
+  const [scenes, setScenes] = useState<SARScene[]>([]);
+  const [activeSceneId, setActiveSceneId] = useState<string>('SD-SAR-001');
+  const [pipelineLogs, setPipelineLogs] = useState<PipelineLogStep[]>([]);
+  const [isPipelineRunning, setIsPipelineRunning] = useState<boolean>(false);
 
   const [layers, setLayers] = useState<MapLayerState>({
     showSpill: true,
@@ -46,7 +71,7 @@ export function App() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
 
-  // Demo Animation States
+  // Demo Sequence Banner State
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
 
@@ -66,14 +91,50 @@ export function App() {
       setSystemStatus(res.status || 'ONLINE');
     });
 
+    fetchDataSourcesStatus().then(res => setDataSourcesStatus(res));
+    fetchSARScenes().then(res => setScenes(res));
+
     loadDemoScenario();
   }, []);
 
-  const loadDemoScenario = async () => {
-    const data = await fetchDemoIncident();
+  const loadDemoScenario = async (sceneId: string = activeSceneId) => {
+    const data = await fetchDemoIncident(sceneId);
     setIncident(data);
     if (data.ranked_vessels.length > 0) {
       setSelectedVessel(data.ranked_vessels[0]);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSceneId) {
+      loadDemoScenario(activeSceneId);
+    }
+  }, [activeSceneId]);
+
+  const handleRunAutomatedPipeline = async (sceneId: string = activeSceneId) => {
+    setActiveTab('dashboard');
+    setIsPipelineRunning(true);
+    setActiveSceneId(sceneId);
+
+    try {
+      const res = await runAutomatedPipeline(sceneId);
+      setPipelineLogs(res.execution_logs || []);
+      if (res.incident) {
+        setIncident(res.incident);
+        if (res.incident.ranked_vessels && res.incident.ranked_vessels.length > 0) {
+          setSelectedVessel(res.incident.ranked_vessels[0]);
+        }
+      }
+
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+    } catch (e) {
+      console.error('Failed to run automated pipeline:', e);
+    } finally {
+      setIsPipelineRunning(false);
     }
   };
 
@@ -82,41 +143,23 @@ export function App() {
     setIsDemoRunning(true);
     setDemoStep(1);
 
-    // Step 1: Satellite SAR Analysis
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 500));
     setDemoStep(2);
 
-    // Step 2: Spill Characterization
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 500));
     setDemoStep(3);
 
-    // Step 3: Ocean Drift Model
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 500));
     setDemoStep(4);
 
-    // Step 4: Probable Origin Reconstruction
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 500));
     setDemoStep(5);
 
-    // Step 5: AIS Telemetry Funnel
-    const data = await fetchDemoIncident();
-    setIncident(data);
-    await new Promise(r => setTimeout(r, 600));
+    await handleRunAutomatedPipeline('SD-SAR-001');
+
     setDemoStep(6);
-
-    // Step 6: Multi-Factor Ranking & Evidence Highlight
-    if (data.ranked_vessels.length > 0) {
-      setSelectedVessel(data.ranked_vessels[0]);
-    }
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 400));
     setIsDemoRunning(false);
-
-    // Celebration Confetti
-    confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.7 }
-    });
   };
 
   const handleUpdateWeights = async (newWeights: ScoringWeights) => {
@@ -142,12 +185,19 @@ export function App() {
     if (found) setSelectedVessel(found);
   };
 
+  const scrollToVesselTable = () => {
+    const el = document.getElementById('vessel-ranking-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenWeights={() => setIsConfigOpen(true)}
         onOpenReport={() => setIsReportOpen(true)}
@@ -169,6 +219,7 @@ export function App() {
           />
         ) : incident ? (
           <div className="space-y-6">
+            
             {/* Top Dashboard Metrics Summary */}
             <DashboardHeader
               incident={incident}
@@ -176,6 +227,26 @@ export function App() {
               onOpenWeights={() => setIsConfigOpen(true)}
               onOpenReport={() => setIsReportOpen(true)}
               onRunDemo={handleRunFullDemo}
+            />
+
+            {/* Mode A: Automated Monitoring Panel */}
+            {viewMode === 'automated' && (
+              <AutomatedMonitoringPanel
+                dataSourcesStatus={dataSourcesStatus}
+                scenes={scenes}
+                activeSceneId={activeSceneId}
+                onSelectScene={setActiveSceneId}
+                onRunPipeline={handleRunAutomatedPipeline}
+                isRunning={isPipelineRunning}
+                logs={pipelineLogs}
+              />
+            )}
+
+            {/* Investigation Alert Banner */}
+            <InvestigationAlertBanner
+              incident={incident}
+              onOpenReport={() => setIsReportOpen(true)}
+              onScrollToVessels={scrollToVesselTable}
             />
 
             {/* Layer Controls & Opacity Slider */}
@@ -196,6 +267,7 @@ export function App() {
               <div className="space-y-6">
                 <DetectionPanel
                   detection={incident.detection}
+                  lookAlike={incident.look_alike}
                   sarImageB64={incident.sar_image_b64}
                   onOpacityChange={(op) => setLayers(prev => ({ ...prev, sarOpacity: op }))}
                 />
@@ -204,8 +276,14 @@ export function App() {
 
               {/* Middle Column: Drift Model & AIS Filtering */}
               <div className="space-y-6">
-                <DriftPanel drift={incident.drift.backcast} />
-                <AISFilterPanel summary={incident.ais_summary} />
+                <DriftPanel
+                  drift={incident.drift.backcast}
+                  monteCarloCone={incident.drift.monte_carlo_cone}
+                />
+                <AISFilterPanel
+                  summary={incident.ais_summary}
+                  darkVessels={incident.dark_vessels}
+                />
                 <TimelinePanel
                   timeline={incident.timeline}
                   selectedVesselMmsi={selectedVessel?.mmsi}
@@ -214,7 +292,7 @@ export function App() {
               </div>
 
               {/* Right Column: Ranked Vessels & Explainable AI */}
-              <div className="space-y-6">
+              <div className="space-y-6" id="vessel-ranking-section">
                 <VesselRankingTable
                   vessels={incident.ranked_vessels}
                   selectedVessel={selectedVessel}

@@ -1,4 +1,4 @@
-import { IncidentData, DetectionResult, DriftData, ForecastPoint, VesselCandidate, ScoringWeights } from '../types';
+import { IncidentData, DetectionResult, DriftData, ForecastPoint, VesselCandidate, ScoringWeights, DataSourcesStatus, SARScene, PipelineRunResponse } from '../types';
 const API_BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/api`
   : '/api';
@@ -24,16 +24,108 @@ export async function fetchHealthStatus(): Promise<any> {
   };
 }
 
-export async function fetchDemoIncident(): Promise<IncidentData> {
+export async function fetchDataSourcesStatus(): Promise<DataSourcesStatus> {
   try {
-    const res = await fetch(`${API_BASE}/demo`);
+    const res = await fetch(`${API_BASE}/data-sources/status`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Data sources status endpoint offline, using fallback provider status');
+  }
+  return {
+    sar_source: { name: "SAR Satellite Feed", status: "DEMO INGESTION", code: "DEMO_DATA", provider: "DemoSatelliteProvider", message: "Sentinel-1 demonstration scenes queue" },
+    ais_source: { name: "AIS Vessel Telemetry", status: "DEMO AIS / LIVE PROVIDER NOT CONNECTED", code: "DEMO_DATA", provider: "DemoAISProvider", message: "Deterministic offshore vessel tracks" },
+    environmental_source: { name: "Ocean & Wind Hydrodynamics", status: "DEMO ENVIRONMENTAL DATA", code: "DEMO_DATA", provider: "DemoEnvironmentalProvider", message: "Demonstration wind/current vectors" },
+    pipeline_status: "READY"
+  };
+}
+
+export async function fetchSARScenes(): Promise<SARScene[]> {
+  try {
+    const res = await fetch(`${API_BASE}/scenes`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Scenes list endpoint offline, using fallback scene list');
+  }
+  return [
+    {
+      scene_id: "SD-SAR-001",
+      satellite: "Sentinel-1C",
+      sensor_mode: "IW GRDH",
+      polarization: "VV+VH",
+      acquisition_timestamp: "2025-09-08T10:30:00Z",
+      region_name: "Arabian Sea — Mumbai High Offshore Sector",
+      center_lat: 18.523,
+      center_lon: 72.750,
+      status: "AVAILABLE",
+      provenance: "Sentinel-1 demonstration scene"
+    },
+    {
+      scene_id: "SD-SAR-002",
+      satellite: "Sentinel-1A",
+      sensor_mode: "IW GRDH",
+      polarization: "VV",
+      acquisition_timestamp: "2025-09-08T11:15:00Z",
+      region_name: "Arabian Sea — Goa Coastal Sector",
+      center_lat: 15.400,
+      center_lon: 73.550,
+      status: "AVAILABLE",
+      provenance: "Sentinel-1 demonstration scene"
+    },
+    {
+      scene_id: "SD-SAR-003",
+      satellite: "Sentinel-1B",
+      sensor_mode: "IW GRDH",
+      polarization: "VV+VH",
+      acquisition_timestamp: "2025-09-08T12:00:00Z",
+      region_name: "Gulf of Khambhat / Gujarat Sector",
+      center_lat: 20.300,
+      center_lon: 72.200,
+      status: "AVAILABLE",
+      provenance: "Sentinel-1 demonstration scene"
+    }
+  ];
+}
+
+export async function runAutomatedPipeline(sceneId: string = "SD-SAR-001"): Promise<PipelineRunResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/pipeline/run?scene_id=${sceneId}`, { method: 'POST' });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Automated pipeline API failed, simulating client-side pipeline execution');
+  }
+
+  // Client-side fallback pipeline simulation
+  const incident = generateClientSideDemoScenario(sceneId);
+  return {
+    scene_id: sceneId,
+    status: "COMPLETED",
+    execution_time_sec: 1.42,
+    execution_logs: [
+      { step: 1, stage: "INGEST_SCENE", message: `Ingested scene ${sceneId} (Sentinel-1 IW GRDH)`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 2, stage: "DETECT_SPILL", message: `Dark backscatter UNet segmentation completed: Slick area ${incident.detection.area_km2} km²`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 3, stage: "CHARACTERIZE_SPILL", message: `Calculated centroid (${incident.detection.centroid.lat}°N, ${incident.detection.centroid.lon}°E) and polygon geometry`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 4, stage: "LOAD_ENVIRONMENT", message: `Loaded environmental vectors: Wind ${incident.environmental.wind_speed_kmh} km/h, Current ${incident.environmental.current_speed_ms} m/s`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 5, stage: "RUN_HINDCAST", message: "Executed hydrodynamic backward advection model", status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 6, stage: "ESTIMATE_ORIGIN", message: `Probable origin estimated at ${incident.drift.backcast.probable_origin.lat}°N, ${incident.drift.backcast.probable_origin.lon}°E`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 7, stage: "FETCH_AIS", message: `Filtered candidate vessels within spatio-temporal release window`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 8, stage: "CORRELATE_VESSELS", message: `Vessels ranked. Top candidate: ${incident.ranked_vessels[0]?.vessel_name || 'N/A'}`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 9, stage: "CREATE_INCIDENT", message: `Canonical incident ${sceneId} updated & active alert dispatched`, status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" },
+      { step: 10, stage: "GENERATE_REPORT", message: "Investigation PDF report ready for download", status: "COMPLETED", timestamp_utc: "2026-09-05T03:00:00Z" }
+    ],
+    incident
+  };
+}
+
+export async function fetchDemoIncident(sceneId: string = "SD-SAR-001"): Promise<IncidentData> {
+  try {
+    const res = await fetch(`${API_BASE}/demo?scene_id=${sceneId}`);
     if (res.ok) {
       return await res.json();
     }
   } catch (e) {
     console.warn('Backend unavailable, generating client-side demo incident scenario');
   }
-  return generateClientSideDemoScenario();
+  return generateClientSideDemoScenario(sceneId);
 }
 
 export async function uploadSarImage(file: File, centerLat: number = 18.523, centerLon: number = 72.812): Promise<DetectionResult> {
@@ -89,15 +181,29 @@ export async function rankVesselsWithWeights(
 // Client-Side Deterministic Fallback Engine (Runs when Backend is offline)
 // ----------------------------------------------------------------------
 
-function generateClientSideDemoScenario(): IncidentData {
-  const centerLat = 18.523;
-  const centerLon = 72.812;
+function generateClientSideDemoScenario(sceneId: string = "SD-SAR-001"): IncidentData {
+  let centerLat = 18.523;
+  let centerLon = 72.812;
+  let title = "Arabian Sea Offshore Spill — Mumbai High Sector";
+  let area_km2 = 14.7;
+
+  if (sceneId === "SD-SAR-002") {
+    centerLat = 15.400;
+    centerLon = 73.550;
+    title = "Arabian Sea Offshore Spill — Goa Coastal Sector";
+    area_km2 = 9.3;
+  } else if (sceneId === "SD-SAR-003") {
+    centerLat = 20.300;
+    centerLon = 72.200;
+    title = "Gulf of Khambhat / Gujarat Offshore Sector Spill";
+    area_km2 = 22.1;
+  }
 
   const detection: DetectionResult = {
     status: "OIL SPILL DETECTED",
     oil_detected: true,
     confidence: 94.2,
-    area_km2: 14.7,
+    area_km2,
     perimeter_km: 18.4,
     length_km: 6.8,
     width_km: 2.7,
@@ -153,7 +259,7 @@ function generateClientSideDemoScenario(): IncidentData {
       mmsi: 419001892,
       vessel_name: "MT OCEAN STAR",
       vessel_type: "Oil Tanker",
-      flag: "India",
+      flag: "Panama",
       length_m: 245,
       rank: 1,
       correlation_score: 91.0,
@@ -294,9 +400,9 @@ function generateClientSideDemoScenario(): IncidentData {
   ];
 
   return {
-    incident_id: "SD-001",
-    title: "Arabian Sea Offshore Spill — Mumbai High Sector",
-    location_name: "Arabian Sea (18.523° N, 72.812° E)",
+    incident_id: sceneId,
+    title,
+    location_name: `Arabian Sea (${centerLat}° N, ${centerLon}° E)`,
     detection_timestamp: "2025-09-08T10:30:00Z",
     sar_image_b64: generateSvgSarB64(),
     detection,

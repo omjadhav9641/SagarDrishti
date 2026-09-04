@@ -14,7 +14,7 @@ export const VesselRankingTable: React.FC<VesselRankingTableProps> = ({
   onSelectVessel
 }) => {
   return (
-    <div className="glass-panel p-5 space-y-4">
+    <div id="vessel-ranking-section" className="glass-panel p-5 space-y-4 scroll-mt-24">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
@@ -97,7 +97,7 @@ export const VesselRankingTable: React.FC<VesselRankingTableProps> = ({
                   <td className="py-3 px-3">
                     <div>
                       <div className="font-bold text-slate-900 text-sm">{vessel.vessel_name}</div>
-                      <div className="text-[10px] text-slate-500">MMSI: {vessel.mmsi} | Flag: {vessel.flag || 'India'}</div>
+                      <div className="text-[10px] text-slate-500">MMSI: {vessel.mmsi} | Flag: {vessel.flag || 'Panama'}</div>
                     </div>
                   </td>
 
